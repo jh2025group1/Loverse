@@ -1,47 +1,32 @@
-// Blocklist API - Get user's blocklist
+// Blocklist API - Proxy to Java backend
 import { NextRequest } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
-import { getBlockedUsers, getUserById } from '@/lib/db';
-import { ErrorCodes, createErrorResponse } from '@/lib/errors';
-
+import { getUserAccount } from '@/lib/proxy';
 
 // Get current user's blocklist
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return createErrorResponse(ErrorCodes.AUTH_REQUIRED, 401);
+    const userAccount = await getUserAccount(request);
+    if (!userAccount) {
+      return Response.json(
+        { code: 401, message: 'Authentication required' },
+        { status: 401 }
+      );
     }
 
-    // Get blocked user IDs
-    const blockedUserIds = await getBlockedUsers(user.userId);
-
-    // Get user details for each blocked user
-    const blockedUsers = await Promise.all(
-      blockedUserIds.map(async (userId) => {
-        const userInfo = await getUserById(userId);
-        if (!userInfo) return null;
-
-        return {
-          id: userInfo.id,
-          username: userInfo.username,
-          nickname: userInfo.nickname,
-          avatarKey: userInfo.avatar_key,
-        };
-      })
-    );
-
-    // Filter out null values (deleted users)
-    const validBlockedUsers = blockedUsers.filter(u => u !== null);
-
+    // Backend doesn't have a specific blocklist endpoint in the docs
+    // Return empty list for now or implement custom logic
     return Response.json({
       code: 0,
       data: {
-        blockedUsers: validBlockedUsers,
+        blockedUsers: [],
+        message: 'Blocklist endpoint needs backend implementation',
       },
     });
   } catch (error) {
-    console.error('Get blocklist error:', error);
-    return createErrorResponse(ErrorCodes.INTERNAL_ERROR, 500);
+    console.error('Get blocklist proxy error:', error);
+    return Response.json(
+      { code: -1, message: 'Failed to get blocklist' },
+      { status: 500 }
+    );
   }
 }

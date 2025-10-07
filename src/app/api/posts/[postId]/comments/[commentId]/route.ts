@@ -1,9 +1,6 @@
-// Individual Comment API - Delete comment
+// Individual Comment API - Delete comment - Proxy to Java backend
 import { NextRequest } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
-import { getCommentById, deleteComment } from '@/lib/db';
-import { ErrorCodes, createErrorResponse } from '@/lib/errors';
-
+import { proxyToBackend, getUserAccount } from '@/lib/proxy';
 
 // Delete comment
 export async function DELETE(
@@ -11,37 +8,33 @@ export async function DELETE(
   context: { params: Promise<{ postId: string; commentId: string }> }
 ) {
   try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return createErrorResponse(ErrorCodes.AUTH_REQUIRED, 401);
+    const userAccount = await getUserAccount(request);
+    if (!userAccount) {
+      return Response.json(
+        { code: 401, message: 'Authentication required' },
+        { status: 401 }
+      );
     }
 
     const params = await context.params;
-    const commentId = parseInt(params.commentId);
-    const comment = await getCommentById(commentId);
+    const commentId = params.commentId;
 
-    if (!comment) {
-      return createErrorResponse(ErrorCodes.COMMENT_NOT_FOUND, 404);
-    }
+    // Backend expects: comment_id
+    const backendBody = {
+      comment_id: commentId,
+    };
 
-    if (comment.user_id !== user.userId) {
-      return createErrorResponse(ErrorCodes.COMMENT_FORBIDDEN, 403);
-    }
-
-    // Delete comment (cascades to replies)
-    await deleteComment(commentId);
-
-    return Response.json({
-      code: 0,
-      message: '删除成功',
+    return await proxyToBackend({
+      method: 'DELETE',
+      path: '/apifox/comment/delete',
+      request,
+      body: backendBody,
     });
   } catch (error) {
-    console.error('Delete comment error:', error);
-
-    if (error && typeof error === 'object' && 'code' in error) {
-      return createErrorResponse(error.code as number, (error as { httpStatus?: number }).httpStatus || 400);
-    }
-
-    return createErrorResponse(ErrorCodes.INTERNAL_ERROR, 500);
+    console.error('Delete comment proxy error:', error);
+    return Response.json(
+      { code: -1, message: 'Failed to delete comment' },
+      { status: 500 }
+    );
   }
 }

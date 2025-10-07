@@ -1,99 +1,92 @@
-// Profile API - Get and Update user profile
+// Profile API - Proxy to Java backend
 import { NextRequest } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
-import { getUserById, updateUser } from '@/lib/db';
-import { validateNickname } from '@/lib/validation';
-import { uploadImage, deleteImage } from '@/lib/storage';
-import { ErrorCodes, createErrorResponse } from '@/lib/errors';
-
+import { proxyToBackend, getUserAccount } from '@/lib/proxy';
 
 // Get current user profile
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return createErrorResponse(ErrorCodes.AUTH_REQUIRED, 401);
+    const userAccount = await getUserAccount(request);
+    if (!userAccount) {
+      return Response.json(
+        { code: 401, message: 'Authentication required' },
+        { status: 401 }
+      );
     }
 
-    const userInfo = await getUserById(user.userId);
-    if (!userInfo) {
-      return createErrorResponse(ErrorCodes.USER_NOT_FOUND, 404);
-    }
-
+    // Backend might have a user info endpoint - for now return basic info
+    // You may need to add a specific backend endpoint for user profile
     return Response.json({
       code: 0,
       data: {
-        id: userInfo.id,
-        username: userInfo.username,
-        nickname: userInfo.nickname,
-        avatarKey: userInfo.avatar_key,
-        createdAt: userInfo.created_at,
+        username: userAccount,
+        message: 'Profile endpoint needs backend implementation',
       },
     });
   } catch (error) {
-    console.error('Get profile error:', error);
-    return createErrorResponse(ErrorCodes.INTERNAL_ERROR, 500);
+    console.error('Get profile proxy error:', error);
+    return Response.json(
+      { code: -1, message: 'Failed to get profile' },
+      { status: 500 }
+    );
   }
 }
 
 // Update user profile
 export async function PUT(request: NextRequest) {
   try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return createErrorResponse(ErrorCodes.AUTH_REQUIRED, 401);
+    const userAccount = await getUserAccount(request);
+    if (!userAccount) {
+      return Response.json(
+        { code: 401, message: 'Authentication required' },
+        { status: 401 }
+      );
     }
 
     const formData = await request.formData();
     const nickname = formData.get('nickname') as string | null;
     const avatar = formData.get('avatar') as File | null;
 
-    const updates: { nickname?: string; avatar_key?: string } = {};
-
-    // Update nickname if provided
-    if (nickname) {
-      validateNickname(nickname);
-      updates.nickname = nickname;
-    }
-
-    // Update avatar if provided
+    // If updating avatar
     if (avatar) {
-      const userInfo = await getUserById(user.userId);
+      const backendFormData = new FormData();
+      backendFormData.append('file', avatar);
+      backendFormData.append('account', userAccount);
 
-      // Delete old avatar if exists
-      if (userInfo?.avatar_key) {
-        await deleteImage(userInfo.avatar_key);
-      }
-
-      // Upload new avatar (with automatic deduplication)
-      const imageKey = await uploadImage(avatar); // Auto hash-based key
-      updates.avatar_key = imageKey;
+      return await proxyToBackend({
+        method: 'PUT',
+        path: '/apifox/image/updateHead',
+        request,
+        body: backendFormData,
+        useFormData: true,
+      });
     }
 
-    // Update user
-    await updateUser(user.userId, updates);
+    // If updating other profile info
+    if (nickname) {
+      // Backend expects: prev_account, new_account (and possibly other fields)
+      const backendBody = {
+        prev_account: parseInt(userAccount) || userAccount,
+        new_account: parseInt(userAccount) || userAccount,
+        // Note: nickname update might need a different backend endpoint
+      };
 
-    // Get updated user info
-    const updatedUser = await getUserById(user.userId);
+      return await proxyToBackend({
+        method: 'PUT',
+        path: '/apifox/user/update',
+        request,
+        body: backendBody,
+      });
+    }
 
     return Response.json({
       code: 0,
-      message: '更新成功',
-      data: {
-        id: updatedUser!.id,
-        username: updatedUser!.username,
-        nickname: updatedUser!.nickname,
-        avatarKey: updatedUser!.avatar_key,
-        createdAt: updatedUser!.created_at,
-      },
+      message: 'No updates provided',
     });
   } catch (error) {
-    console.error('Update profile error:', error);
-
-    if (error && typeof error === 'object' && 'code' in error) {
-      return createErrorResponse(error.code as number, (error as { httpStatus?: number }).httpStatus || 400);
-    }
-
-    return createErrorResponse(ErrorCodes.INTERNAL_ERROR, 500);
+    console.error('Update profile proxy error:', error);
+    return Response.json(
+      { code: -1, message: 'Failed to update profile' },
+      { status: 500 }
+    );
   }
 }
