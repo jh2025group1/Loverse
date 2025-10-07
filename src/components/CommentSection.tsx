@@ -197,18 +197,18 @@ export function CommentSection({ postId }: CommentSectionProps) {
                     nickname={comment.author.nickname}
                     avatarKey={comment.author.avatarKey}
                   >
-                    <Link href={`/user/${comment.author.id}`} className="hover:opacity-80 transition-opacity">
+                    <Link href={`/user/${comment.author.id}`} className="block flex-shrink-0 hover:opacity-80 transition-opacity">
                       {comment.author.avatarKey ? (
                         <Image
                           src={`/api/images?key=${comment.author.avatarKey}`}
                           alt={comment.author.nickname}
                           width={32}
                           height={32}
-                          className="rounded-full object-cover"
+                          className="w-8 h-8 rounded-full object-cover"
                           unoptimized
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
                           <span className="text-white text-sm">
                             {comment.author.nickname.charAt(0)}
                           </span>
@@ -217,10 +217,10 @@ export function CommentSection({ postId }: CommentSectionProps) {
                     </Link>
                   </UserHoverCard>
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-gray-300"></div>
+                  <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0"></div>
                 )}
 
-                <div className="ml-3 flex-1">
+                <div className="ml-3 flex-1 min-w-0">
                   <div className="flex items-center">
                     {comment.author ? (
                       <UserHoverCard
@@ -241,7 +241,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
                     </span>
                   </div>
 
-                  <p className="mt-1 text-gray-700 whitespace-pre-wrap">
+                  <p className="mt-1 text-gray-700 whitespace-pre-wrap break-words">
                     {comment.content}
                   </p>
 
@@ -275,7 +275,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
                               nickname={reply.author.nickname}
                               avatarKey={reply.author.avatarKey}
                             >
-                              <Link href={`/user/${reply.author.id}`} className="hover:opacity-80 transition-opacity">
+                              <Link href={`/user/${reply.author.id}`} className="block flex-shrink-0 hover:opacity-80 transition-opacity">
                                 {reply.author.avatarKey ? (
                                   <Image
                                     src={`/api/images?key=${reply.author.avatarKey}`}
@@ -286,7 +286,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
                                     unoptimized
                                   />
                                 ) : (
-                                  <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+                                  <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
                                     <span className="text-white text-xs">
                                       {reply.author.nickname.charAt(0)}
                                     </span>
@@ -295,10 +295,10 @@ export function CommentSection({ postId }: CommentSectionProps) {
                               </Link>
                             </UserHoverCard>
                           ) : (
-                            <div className="w-6 h-6 rounded-full bg-gray-300"></div>
+                            <div className="w-6 h-6 rounded-full bg-gray-300 flex-shrink-0"></div>
                           )}
 
-                          <div className="ml-2 flex-1">
+                          <div className="ml-2 flex-1 min-w-0">
                             <div className="flex items-center">
                               {reply.author ? (
                                 <UserHoverCard
@@ -319,7 +319,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
                               </span>
                             </div>
 
-                            <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
+                            <p className="mt-1 text-sm text-gray-700 whitespace-pre-wrap break-words">
                               {reply.content}
                             </p>
 

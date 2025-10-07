@@ -84,6 +84,7 @@ export async function PUT(request: NextRequest) {
         username: updatedUser!.username,
         nickname: updatedUser!.nickname,
         avatarKey: updatedUser!.avatar_key,
+        createdAt: updatedUser!.created_at,
       },
     });
   } catch (error) {
