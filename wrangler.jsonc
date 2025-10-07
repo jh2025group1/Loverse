@@ -28,7 +28,7 @@
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
 	 */
-	// "placement": { "mode": "smart" }
+	"placement": { "mode": "smart" },
 	/**
 	 * Bindings
 	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
@@ -66,17 +66,20 @@
 	"r2_buckets": [
 		{
 			"binding": "IMAGES",
-			"bucket_name": "confession-wall-images"
+			"bucket_name": "confession-wall-images",
+			"preview_bucket_name": "confession-wall-images"
 		}
 	],
 	"kv_namespaces": [
 		{
 			"binding": "CACHE",
-			"id": "385152facfe245d09f6d8557659af111"
+			"id": "385152facfe245d09f6d8557659af111",
+			"preview_id": "385152facfe245d09f6d8557659af111"
 		},
 		{
 			"binding": "SESSIONS",
-			"id": "56bea791942c42eca6ad7ba0e89c7865"
+			"id": "56bea791942c42eca6ad7ba0e89c7865",
+			"preview_id": "56bea791942c42eca6ad7ba0e89c7865"
 		}
 	]
 }
